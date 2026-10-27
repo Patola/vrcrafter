@@ -77,6 +77,85 @@ $HOME/.local/share/vrcrafter/logs/vrcrafter-native.log
 
 Optional `VRCRAFTER_PAYLOAD` and `VRCRAFTER_LOG_DIR` launch-option overrides use Linux paths; the launcher converts them to Wine `Z:` paths. Proton's diagnostic log defaults to `$HOME/steam-1284190.log` and can be redirected with `PROTON_LOG_DIR`. The managed log is `drive_c/users/steamuser/AppData/Local/vrcrafter/managed.log` inside the app's Proton prefix.
 
-## Validation status and runtime checks
+## Validation status and acceptance diagnostics
 
-Source pinning and static packaging checks do not prove a Proton build or runtime launch. Build, installation, disabled/enabled launches, clean-prefix behavior, helper-process exclusion, ordinary WinHTTP forwarding, and the ordered loader assertions still require their monitored verification steps. Use a backed-up private test save and at most one controlled game instance. Confirm that no `BepInEx` directory or `winhttp.dll` appears in the game installation, and collect native, managed, Unity Player, and Proton logs for every runtime validation.
+The direct custom-Proton run has demonstrated identity acceptance, Harmony patching, `PING=42`, host ticks, worker dispatch, original-method continuation, and `HOST_DESTROY`. The new 30-second GC stress run, expanded acceptance matrix, clean-prefix run, and optional Chainloader runtime remain **unverified**. Source checks do not prove runtime behavior, VR, OpenXR, stereo rendering, or multiplayer compatibility.
+
+Every game launch requires explicit per-launch user permission and at most one game instance. Use a backed-up private test save. Do not launch the game as part of source builds or verifier tests, and do not use stock Proton for game validation. Confirm that no `BepInEx` directory or `winhttp.dll` appears in the game installation.
+
+Run the bounded source checks from the repository root:
+
+```bash
+bash eng/build-managed.sh
+bash eng/build-native.sh
+python3 eng/check_licenses.py
+python3 tests/integration/test-verify-loader.py
+python3 -m py_compile tests/integration/verify-loader.py tests/integration/test-verify-loader.py
+git diff --check
+```
+
+`eng/build-native.sh` regenerates `artifacts/native/winhttp.def` from the pinned backend and fails on missing, duplicate, or unexpected Vrcrafter exports. Inspect the resulting export table with:
+
+```bash
+objdump -p artifacts/payload/winhttp.dll
+```
+
+The table must contain every backend WinHTTP forwarding export plus `VrcrafterPing` and `VrcrafterStart`, and no Mono import. The managed project files must keep all game and Unity references non-private (`<Private>false</Private>`). The primary payload must not contain game/Unity assemblies, UUVR, BepInEx.Utility, or Doorstop; none of those files may be added to source control.
+
+### Per-run logs and verifier commands
+
+Keep each launch in its own directory so intentional failures cannot satisfy or contaminate a successful run:
+
+```text
+artifacts/logs/acceptance/
+├── normal/             # enabled direct run, including GC stress and clean exit
+├── clean-prefix/       # same successful sequence in a newly created prefix
+├── disabled/           # Proton log with VRCRAFTER_ENABLE absent; no loader startup markers
+├── process-exclusion/  # enabled helper/crash process; native exclusion markers only
+├── missing-managed/    # intentional negative evidence; not part of success verification
+├── managed-exception/  # intentional negative evidence; not part of success verification
+└── wrong-hash/         # intentional negative evidence; not part of success verification
+```
+
+Collect native, managed, Unity Player, and Proton logs for each run. A successful `normal` or `clean-prefix` directory must contain native and managed evidence. A fully disabled launch does not inject the proxy, so its required evidence is an isolated Proton log with no `START`, `START_QUEUED`, `MANAGED_ENTRY`, identity, host-creation, or host-update marker. Process exclusion instead requires `PROCESS`, followed by `ACTIVATION_SKIPPED error=0 executable is not Planet Crafter.exe`, with no loader startup.
+
+After a successful direct run, and after collecting all four required run directories, run:
+
+```bash
+python3 tests/integration/verify-loader.py direct artifacts/logs/acceptance/normal
+python3 tests/integration/verify-loader.py artifacts/logs/acceptance
+```
+
+The second command defaults to `acceptance` mode. It ignores the intentional-negative directories and fails if `normal`, `clean-prefix`, `disabled`, or `process-exclusion` evidence is absent or invalid. It rejects duplicate initialization/host creation, managed exceptions, identity rejection, nonzero managed results, missing original continuation, wrong marker order, and invalid activation controls.
+
+Expected ordered direct markers are:
+
+```text
+IDENTITY_ACCEPT HARMONY_PATCH HOST_CREATE HOST_UPDATE WORKER_DISPATCH ORIGINAL_CONTINUES
+GC_STRESS_START HOST_UPDATE WORKER_DISPATCH GC_STRESS_OK HOST_DESTROY
+```
+
+`GC_STRESS_START duration=30s` starts the diagnostic automatically on the host's first update. It allocates short-lived managed byte arrays for at least 30 seconds and queues a callback every 250 ms. During stress, `HOST_UPDATE tick=N thread=T` must remain sequential on one thread; each `WORKER_DISPATCH source=gc-stress callback=N thread=T` must use that same thread. `GC_STRESS_OK` must report at least 30000 ms, a positive allocation count, and the exact number of observed callbacks. `GC_STRESS_ERROR`, duplicate stress/destroy markers, missing ticks/callbacks, or thread changes fail verification. A successful verifier prints `LOADER_MARKERS_OK`.
+
+The optional Chainloader bridge can be checked separately with `python3 tests/integration/verify-loader.py chainloader LOG_DIRECTORY` after its runtime evidence exists. Programmatic `Chainloader.Initialize`/`Start` is **not Cecil preloader-patcher compatibility**: it does not establish preloader-patcher execution or general BepInEx compatibility.
+
+### Save and prefix restoration
+
+Before any authorized runtime test, set `PREFIX` to the actual app prefix and preserve both the save and prefix while the game is closed:
+
+```bash
+SAVE_DIR="$PREFIX/drive_c/users/steamuser/AppData/LocalLow/MijuGames/The Planet Crafter"
+cp -a -- "$SAVE_DIR" "$SAVE_DIR.pre-vrcrafter"
+cp -a -- "$PREFIX" "$PREFIX.pre-vrcrafter"
+```
+
+To restore after the game has exited, move the test versions aside rather than deleting them, then move the backups back:
+
+```bash
+mv -- "$SAVE_DIR" "$SAVE_DIR.rejected"
+mv -- "$SAVE_DIR.pre-vrcrafter" "$SAVE_DIR"
+mv -- "$PREFIX" "$PREFIX.rejected"
+mv -- "$PREFIX.pre-vrcrafter" "$PREFIX"
+```
+
+Restore moved managed payload files immediately after each intentional failure and rerun source builds before any later authorized launch. Keep failed prefixes and logs until their evidence has been reviewed.
