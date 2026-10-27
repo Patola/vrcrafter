@@ -1,4 +1,5 @@
 #include "log.h"
+#include "mono_host.h"
 
 #include <windows.h>
 #include <wchar.h>
@@ -12,14 +13,32 @@ __declspec(dllexport) int WINAPI VrcrafterPing(int value)
 
 __declspec(dllexport) DWORD WINAPI VrcrafterStart(void)
 {
+    WCHAR payload[MAX_PATH];
+    DWORD length;
+    DWORD error;
+
     if (InterlockedCompareExchange(&g_start_state, 1, 0) != 0) {
         VrcrafterLog("START_SKIPPED", ERROR_ALREADY_EXISTS,
                      L"deferred entry was already claimed");
         return 0;
     }
 
-    VrcrafterLog("DEFERRED_START", ERROR_SUCCESS, L"VrcrafterStart stub");
-    return 0;
+    length = GetEnvironmentVariableW(L"VRCRAFTER_PAYLOAD", payload, MAX_PATH);
+    if (length == 0) {
+        error = GetLastError();
+        if (error == ERROR_SUCCESS)
+            error = ERROR_ENVVAR_NOT_FOUND;
+        VrcrafterLog("PAYLOAD", error, L"VRCRAFTER_PAYLOAD is unavailable");
+        return error;
+    }
+    if (length >= MAX_PATH) {
+        VrcrafterLog("PAYLOAD", ERROR_INSUFFICIENT_BUFFER,
+                     L"VRCRAFTER_PAYLOAD is too long");
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    VrcrafterLog("DEFERRED_START", ERROR_SUCCESS, L"mono_host_start");
+    return mono_host_start(payload);
 }
 
 static DWORD WINAPI deferred_start(void *context)

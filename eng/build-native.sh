@@ -13,5 +13,6 @@ mkdir -p artifacts/native artifacts/payload
 cp -f "$backend" artifacts/payload/vrcrafter-winhttp-backend.dll
 python3 eng/generate-winhttp-exports.py "$backend" artifacts/native/winhttp.def
 x86_64-w64-mingw32-gcc -shared -std=c11 -O2 -Wall -Wextra -Werror \
-    src/native/winhttp_proxy.c src/native/log.c artifacts/native/winhttp.def \
+    src/native/winhttp_proxy.c src/native/log.c src/native/mono_host.c \
+    artifacts/native/winhttp.def \
     -o artifacts/payload/winhttp.dll
