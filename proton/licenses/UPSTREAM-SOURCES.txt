@@ -1,0 +1,29 @@
+VRCrafter project source and license:
+https://github.com/Patola/vrcrafter
+https://github.com/Patola/vrcrafter/blob/main/LICENSE
+
+Proton 11.0-2 source (git tag proton-11.0-2):
+https://github.com/ValveSoftware/Proton/tree/proton-11.0-2
+https://github.com/ValveSoftware/Proton/blob/proton-11.0-2/LICENSE
+https://github.com/ValveSoftware/Proton/blob/proton-11.0-2/dist.LICENSE
+
+Valve Wine source used by Proton, at the commit recorded by the Proton submodule:
+https://github.com/ValveSoftware/wine
+https://github.com/ValveSoftware/wine/tree/dc26e61847081a1b5cb0733dc30feba6ee575482
+https://github.com/ValveSoftware/wine/blob/dc26e61847081a1b5cb0733dc30feba6ee575482/COPYING.LIB
+
+BepInEx 5.4.23.5 source and MIT notice:
+https://github.com/BepInEx/BepInEx/tree/v5.4.23.5
+https://github.com/BepInEx/BepInEx/blob/v5.4.23.5/LICENSE
+
+HarmonyX source and MIT notice:
+https://github.com/BepInEx/HarmonyX
+https://github.com/BepInEx/HarmonyX/blob/master/LICENSE
+
+MonoMod source and MIT notice:
+https://github.com/MonoMod/MonoMod
+https://github.com/MonoMod/MonoMod/blob/master/LICENSE
+
+Mono.Cecil source and MIT notice:
+https://github.com/jbevain/cecil
+https://github.com/jbevain/cecil/blob/master/LICENSE.txt

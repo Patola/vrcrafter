@@ -1,0 +1,87 @@
+diff --git a/Makefile.in b/Makefile.in
+index 5e477c7f..bd1173eb 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -1426,6 +1426,19 @@ $(DIST_COPY_TARGETS): | $(DST_DIR)
+ 
+ all-dist: $(DIST_COPY_TARGETS)
+ 
++VRCRAFTER_PAYLOAD_DIR := $(SRCDIR)/vrcrafter/payload
++VRCRAFTER_DIST_DIR := $(DST_BASE)/vrcrafter/payload
++VRCRAFTER_NATIVE_PAYLOAD := winhttp.dll vrcrafter-winhttp-backend.dll
++VRCRAFTER_MANAGED_PAYLOAD := $(notdir $(wildcard $(VRCRAFTER_PAYLOAD_DIR)/managed/*.dll))
++VRCRAFTER_PAYLOAD_TARGETS := $(addprefix $(VRCRAFTER_DIST_DIR)/,$(VRCRAFTER_NATIVE_PAYLOAD)) \
++	$(addprefix $(VRCRAFTER_DIST_DIR)/managed/,$(VRCRAFTER_MANAGED_PAYLOAD))
++
++$(VRCRAFTER_DIST_DIR)/%: $(VRCRAFTER_PAYLOAD_DIR)/%
++	mkdir -p $(dir $@)
++	cp -a $< $@
++
++all-dist: $(VRCRAFTER_PAYLOAD_TARGETS)
++
+ all-dist:
+ 	echo `date '+%s'` `GIT_DIR=$(abspath $(SRCDIR)/.git) git describe --tags` > $(DIST_VERSION)
+ 
+diff --git a/compatibilitytool.vdf.template b/compatibilitytool.vdf.template
+index 090eff5c..357edda1 100644
+--- a/compatibilitytool.vdf.template
++++ b/compatibilitytool.vdf.template
+@@ -2,7 +2,7 @@
+ {
+   "compat_tools"
+   {
+-    "##INTERNAL_TOOL_NAME##" // Internal name of this tool
++    "vrcrafter-proton" // Internal name of this tool
+     {
+       // Can register this tool with Steam in two ways:
+       //
+@@ -14,7 +14,7 @@
+       "install_path" "."
+ 
+       // For this template, we're going to substitute the display_name key in here, e.g.:
+-      "display_name" "##BUILD_NAME##"
++      "display_name" "vrcrafter-proton"
+ 
+       "from_oslist"  "windows"
+       "to_oslist"    "linux"
+diff --git a/proton b/proton
+index 977dc4ea..5f7244f3 100755
+--- a/proton
++++ b/proton
+@@ -992,6 +992,17 @@ class CompatData:
+             if not file_exists(self.prefix_dir + "/dosdevices/z:", follow_symlinks=False):
+                 os.symlink("/", self.prefix_dir + "/dosdevices/z:")
+ 
++            if g_session.vrcrafter_enabled:
++                makedirs(g_session.vrcrafter_log_dir)
++                system32 = self.prefix_dir + "/drive_c/windows/system32"
++                makedirs(system32)
++                for filename in ('winhttp.dll', 'vrcrafter-winhttp-backend.dll'):
++                    source = os.path.join(g_session.vrcrafter_payload_dir, filename)
++                    destination = os.path.join(system32, filename)
++                    temporary = destination + '.vrcrafter-new'
++                    shutil.copyfile(source, temporary)
++                    os.replace(temporary, destination)
++
+             # collect configuration info
+             steamdir = os.environ["STEAM_COMPAT_CLIENT_INSTALL_PATH"]
+ 
+@@ -1482,6 +1493,18 @@ class Session:
+                 "winebth.sys": "d", #disable winebth.sys as it crashes winedevice.exe
+         }
+ 
++        self.vrcrafter_enabled = (
++                self.env.get('SteamGameId') == '1284190' and
++                self.env.get('VRCRAFTER_ENABLE') == '1')
++        self.vrcrafter_payload_dir = os.path.abspath(os.path.expanduser(
++                self.env.get('VRCRAFTER_PAYLOAD', '~/.local/share/vrcrafter/payload')))
++        self.vrcrafter_log_dir = os.path.abspath(os.path.expanduser(
++                self.env.get('VRCRAFTER_LOG_DIR', '~/.local/share/vrcrafter/logs')))
++        if self.vrcrafter_enabled:
++            self.dlloverrides['winhttp'] = 'n,b'
++            self.env['VRCRAFTER_PAYLOAD'] = 'Z:' + self.vrcrafter_payload_dir.replace('/', '\\')
++            self.env['VRCRAFTER_LOG_DIR'] = 'Z:' + self.vrcrafter_log_dir.replace('/', '\\')
++
+         # CW Bug 21737. Locoland executable happens to be steam.exe.
+         if os.environ.get("SteamGameId", 0) == "352130":
+             del self.dlloverrides["steam.exe"]
