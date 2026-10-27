@@ -22,7 +22,9 @@ git -C "$proton_dir" submodule update --init --recursive
 for payload_file in \
     artifacts/payload/winhttp.dll \
     artifacts/payload/vrcrafter-winhttp-backend.dll \
-    artifacts/payload/managed/Vrcrafter.Bootstrap.dll; do
+    artifacts/payload/managed/Vrcrafter.Bootstrap.dll \
+    artifacts/payload/bepinex/core/BepInEx.dll \
+    artifacts/payload/bepinex/plugins/Vrcrafter.BepInExControl.dll; do
     test -f "$payload_file"
 done
 
@@ -57,9 +59,12 @@ make -C "$build_dir" dist
 
 mkdir -p "$root_dir/artifacts/proton-dist"
 rsync -a --delete "$build_dir/dist/" "$stage_dir/"
+rsync -a --delete artifacts/payload/bepinex/ "$stage_dir/vrcrafter/payload/bepinex/"
 python3 eng/package-licenses.py "$stage_dir"
 grep -q '"display_name" "vrcrafter-proton"' "$stage_dir/compatibilitytool.vdf"
 test -f "$stage_dir/vrcrafter/payload/winhttp.dll"
 test -f "$stage_dir/vrcrafter/payload/vrcrafter-winhttp-backend.dll"
 test -f "$stage_dir/vrcrafter/payload/managed/Vrcrafter.Bootstrap.dll"
+test -f "$stage_dir/vrcrafter/payload/bepinex/core/BepInEx.dll"
+test -f "$stage_dir/vrcrafter/payload/bepinex/plugins/Vrcrafter.BepInExControl.dll"
 printf 'Staged custom compatibility tool at %s\n' "$stage_dir"

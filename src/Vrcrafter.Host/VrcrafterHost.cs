@@ -20,6 +20,11 @@ namespace Vrcrafter.Host
             LogSink = logSink;
         }
 
+        public static void Log(string message)
+        {
+            LogSink(message);
+        }
+
         public void Update()
         {
             updates++;

@@ -15,7 +15,9 @@ for required_file in \
     "$stage_dir/licenses/Proton-dist.LICENSE.txt" \
     "$stage_dir/vrcrafter/payload/winhttp.dll" \
     "$stage_dir/vrcrafter/payload/vrcrafter-winhttp-backend.dll" \
-    "$stage_dir/vrcrafter/payload/managed/Vrcrafter.Bootstrap.dll"; do
+    "$stage_dir/vrcrafter/payload/managed/Vrcrafter.Bootstrap.dll" \
+    "$stage_dir/vrcrafter/payload/bepinex/core/BepInEx.dll" \
+    "$stage_dir/vrcrafter/payload/bepinex/plugins/Vrcrafter.BepInExControl.dll"; do
     test -f "$required_file"
 done
 

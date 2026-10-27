@@ -59,7 +59,7 @@ namespace Vrcrafter.BepInExBridge
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("BEPINEX_CHAINLOADER_ERROR " + ex);
+                VrcrafterHost.Log("BEPINEX_CHAINLOADER_ERROR " + ex);
             }
         }
 
@@ -178,8 +178,11 @@ namespace Vrcrafter.BepInExBridge
                 throw new InvalidOperationException("BepInEx did not instantiate the control plugin.");
             }
 
+            string marker = "BEPINEX_CHAINLOADER_OK thread="
+                + Thread.CurrentThread.ManagedThreadId;
+            VrcrafterHost.Log(marker);
             ManualLogSource log = Logger.CreateLogSource("VRCrafter Chainloader");
-            log.LogInfo("BEPINEX_CHAINLOADER_OK thread=" + Thread.CurrentThread.ManagedThreadId);
+            log.LogInfo(marker);
         }
     }
 }
