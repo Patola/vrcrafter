@@ -11,7 +11,7 @@ verify_loader = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(verify_loader)
 
 
-def successful_run(callback_count=120, callback_interval=250):
+def successful_run(callback_count=120, callback_interval=250, tick_stride=1):
     lines = [
         "[10] PROCESS error=0 Planet Crafter.exe",
         "[10] START_QUEUED error=0 deferred entry queued",
@@ -26,7 +26,7 @@ def successful_run(callback_count=120, callback_interval=250):
         "GC_STRESS_START duration=30s thread=4",
     ]
     for callback in range(1, callback_count + 1):
-        lines.append("HOST_UPDATE tick={0} thread=1".format(callback + 1))
+        lines.append("HOST_UPDATE tick={0} thread=1".format((callback + 1) * tick_stride))
         lines.append("WORKER_DISPATCH source=gc-stress callback={0} elapsed_ms={1} thread=1".format(
             callback, callback * callback_interval))
     lines.extend((
@@ -113,6 +113,14 @@ class DirectVerificationTests(unittest.TestCase):
 
     def test_rejects_unstable_ticks(self):
         text = successful_run().replace("HOST_UPDATE tick=3 ", "HOST_UPDATE tick=4 ")
+        self.assertRejected(text, "tick sequence")
+
+    def test_accepts_strictly_increasing_sparse_ticks(self):
+        verify_loader.verify(successful_run(tick_stride=10))
+
+    def test_rejects_non_monotonic_sparse_ticks(self):
+        text = successful_run(tick_stride=10).replace(
+            "HOST_UPDATE tick=30 ", "HOST_UPDATE tick=20 ")
         self.assertRejected(text, "tick sequence")
 
     def test_rejects_short_gc_stress(self):

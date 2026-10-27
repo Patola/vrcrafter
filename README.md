@@ -321,7 +321,7 @@ IDENTITY_ACCEPT HARMONY_PATCH HOST_CREATE HOST_UPDATE WORKER_DISPATCH ORIGINAL_C
 GC_STRESS_START HOST_UPDATE WORKER_DISPATCH GC_STRESS_OK HOST_DESTROY
 ```
 
-The GC diagnostic allocates for at least 30 seconds and posts every 250 ms. Verification requires at least 100 sequential same-thread callbacks, `elapsed_ms` spanning at least 25 seconds, and a final callback within two seconds of the reported completion. Ticks must be sequential, allocation count positive, and callback count exact. A successful verifier prints `LOADER_MARKERS_OK`; no runtime marker is claimed from source checks.
+The GC diagnostic allocates for at least 30 seconds and posts every 250 ms. Verification requires at least 100 contiguous same-thread callbacks, `elapsed_ms` spanning at least 25 seconds, and a final callback within two seconds of the reported completion. Sparse host ticks are valid when their positive numbers are strictly increasing on an unchanged host thread; allocation count must be positive and callback count exact. A successful verifier prints `LOADER_MARKERS_OK`; no runtime marker is claimed from source checks.
 
 The optional Chainloader bridge can be checked separately with `python3 tests/integration/verify-loader.py chainloader LOG_DIRECTORY` after its runtime evidence exists. Programmatic `Chainloader.Initialize`/`Start` is **not Cecil preloader-patcher compatibility**: it does not establish preloader-patcher execution or general BepInEx compatibility.
 

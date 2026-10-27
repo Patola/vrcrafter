@@ -136,7 +136,9 @@ def verify_gc_stress(text, host_thread):
                     "30-second GC stress start")
     updates = [(int(match.group(1)), match.group(2)) for match in re.finditer(
         r"HOST_UPDATE tick=(\d+) thread=(\d+)", text)]
-    if [tick for tick, thread in updates] != list(range(1, len(updates) + 1)):
+    ticks = [tick for tick, thread in updates]
+    if not ticks or any(tick <= 0 for tick in ticks) or any(
+            previous >= current for previous, current in zip(ticks, ticks[1:])):
         raise AssertionError("HOST_UPDATE tick sequence is not stable")
     if any(thread != host_thread for tick, thread in updates):
         raise AssertionError("HOST_UPDATE thread changed")
