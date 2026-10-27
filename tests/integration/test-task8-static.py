@@ -72,9 +72,25 @@ class DiagnosticTests(unittest.TestCase):
             subprocess.run(["monodis", "--output=" + str(disassembly), str(bridge)],
                            cwd=ROOT, env=environment, check=True)
             il = disassembly.read_text(encoding="utf-8")
-        self.assertEqual(2, il.count("Vrcrafter.Host.VrcrafterHost::Log(string)"))
+        self.assertEqual(3, il.count("Vrcrafter.Host.VrcrafterHost::Log(string)"))
         self.assertIn("BEPINEX_CHAINLOADER_OK", il)
         self.assertIn("BEPINEX_CHAINLOADER_ERROR", il)
+        self.assertIn("BEPINEX_PATHS", il)
+        self.assertIn("Paths::get_BepInExRootPath()", il)
+        self.assertIn("Paths::get_BepInExAssemblyDirectory()", il)
+        self.assertIn("Paths::get_PluginPath()", il)
+        self.assertIn("System.IO.Directory::CreateDirectory(string)", il)
+
+        disk_config = il.index('ldstr "Logging.Disk"')
+        initialize = il.index("Chainloader::Initialize", disk_config)
+        before_initialize = il[disk_config:initialize]
+        self.assertIn('ldstr "Enabled"', before_initialize)
+        self.assertIn("ldc.i4.0", before_initialize)
+        self.assertIn("ConfigEntry`1<bool>::set_Value(!0)", before_initialize)
+        self.assertIn("HideManagerGameObject", il[:disk_config])
+        self.assertIn("Chainloader::Start", il[initialize:])
+        self.assertIn("Chainloader::get_PluginInfos", il[initialize:])
+        self.assertLess(initialize, il.index("BEPINEX_CHAINLOADER_OK", initialize))
 
 
 if __name__ == "__main__":

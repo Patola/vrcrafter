@@ -52,6 +52,7 @@ namespace Vrcrafter.BepInExBridge
                 string corePath = Path.Combine(bepinRoot, "core");
                 string pluginPath = Path.Combine(bepinRoot, "plugins");
 
+                Directory.CreateDirectory(bepinRoot);
                 InstallResolver(corePath, managedPath, pluginPath);
                 InitializePaths(executablePath, bepinRoot, managedPath, corePath, pluginPath);
                 PreloadCriticalAssemblies(corePath);
@@ -118,6 +119,9 @@ namespace Vrcrafter.BepInExBridge
                 executablePath, bepinRoot, managedPath, new[] { corePath, managedPath, pluginPath }
             });
             setPluginPath.Invoke(null, new object[] { pluginPath });
+            VrcrafterHost.Log("BEPINEX_PATHS root=" + Paths.BepInExRootPath
+                + " assemblyDirectory=" + Paths.BepInExAssemblyDirectory
+                + " pluginPath=" + Paths.PluginPath);
         }
 
         private static void PreloadCriticalAssemblies(string corePath)
@@ -168,6 +172,7 @@ namespace Vrcrafter.BepInExBridge
             }
 
             coreConfig.Bind("Chainloader", "HideManagerGameObject", true).Value = true;
+            coreConfig.Bind("Logging.Disk", "Enabled", false).Value = false;
             Chainloader.Initialize(executablePath, false, null);
             Chainloader.Start();
 
