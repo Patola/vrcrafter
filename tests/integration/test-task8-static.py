@@ -72,10 +72,11 @@ class DiagnosticTests(unittest.TestCase):
             subprocess.run(["monodis", "--output=" + str(disassembly), str(bridge)],
                            cwd=ROOT, env=environment, check=True)
             il = disassembly.read_text(encoding="utf-8")
-        self.assertEqual(3, il.count("Vrcrafter.Host.VrcrafterHost::Log(string)"))
+        self.assertEqual(4, il.count("Vrcrafter.Host.VrcrafterHost::Log(string)"))
         self.assertIn("BEPINEX_CHAINLOADER_OK", il)
         self.assertIn("BEPINEX_CHAINLOADER_ERROR", il)
         self.assertIn("BEPINEX_PATHS", il)
+        self.assertIn("BEPINEX_PATHS_AFTER_INIT", il)
         self.assertIn("Paths::get_BepInExRootPath()", il)
         self.assertIn("Paths::get_BepInExAssemblyDirectory()", il)
         self.assertIn("Paths::get_PluginPath()", il)
@@ -88,8 +89,16 @@ class DiagnosticTests(unittest.TestCase):
         self.assertIn("ldc.i4.0", before_initialize)
         self.assertIn("ConfigEntry`1<bool>::set_Value(!0)", before_initialize)
         self.assertIn("HideManagerGameObject", il[:disk_config])
-        self.assertIn("Chainloader::Start", il[initialize:])
-        self.assertIn("Chainloader::get_PluginInfos", il[initialize:])
+        self.assertRegex(
+            il,
+            r"ldnull\s+IL_[0-9a-f]+:\s+ldc\.i4\.0\s+IL_[0-9a-f]+:\s+ldnull\s+"
+            r"IL_[0-9a-f]+:\s+call void class \[BepInEx\]BepInEx\.Bootstrap\."
+            r"Chainloader::Initialize")
+        after_initialize = il[initialize:]
+        self.assertIn("BEPINEX_PATHS_AFTER_INIT", after_initialize)
+        self.assertLess(after_initialize.index("BEPINEX_PATHS_AFTER_INIT"),
+                        after_initialize.index("Chainloader::Start"))
+        self.assertIn("Chainloader::get_PluginInfos", after_initialize)
         self.assertLess(initialize, il.index("BEPINEX_CHAINLOADER_OK", initialize))
 
 

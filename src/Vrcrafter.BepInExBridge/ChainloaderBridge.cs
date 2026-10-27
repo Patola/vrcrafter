@@ -173,7 +173,10 @@ namespace Vrcrafter.BepInExBridge
 
             coreConfig.Bind("Chainloader", "HideManagerGameObject", true).Value = true;
             coreConfig.Bind("Logging.Disk", "Enabled", false).Value = false;
-            Chainloader.Initialize(executablePath, false, null);
+            Chainloader.Initialize(null, false, null);
+            VrcrafterHost.Log("BEPINEX_PATHS_AFTER_INIT root=" + Paths.BepInExRootPath
+                + " assemblyDirectory=" + Paths.BepInExAssemblyDirectory
+                + " pluginPath=" + Paths.PluginPath);
             Chainloader.Start();
 
             PluginInfo control;
