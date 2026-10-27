@@ -15,7 +15,9 @@
 - BepInEx core, HarmonyX, and MonoMod are permitted MIT dependencies. Doorstop is LGPL-2.1 and is used unmodified only in the control path.
 - Never redistribute game assemblies. Reference them from `TPC_GAME_DIR`, defaulting to `/games/SteamLibrary/steamapps/common/The Planet Crafter`.
 - Never initialize a second Mono runtime, unload Unity's root domain, call `mono_jit_cleanup`, or perform Unity object access on the native worker.
-- Keep stock Proton and original game assemblies unchanged. Install only a separately selected compatibility tool and payload.
+- Keep stock Proton and original game assemblies unchanged. Install only a separately selected compatibility tool and payload under `~/.local/share/Steam/compatibilitytools.d`.
+- Do not use the installed stock Proton for real-game mod validation. Complete Task 7's separately compiled `vrcrafter-proton` installation before any further real-game validation; Task 7 may therefore be executed before the pending runtime portions of Tasks 4–6.
+- Run at most one controlled game instance at a time, through the selected custom compatibility tool, and verify that its process tree has exited before another launch.
 - Native bootstrap work must occur outside `DllMain`; native/managed callbacks must remain valid for process lifetime.
 - Unknown game identity fails without game patches. The accepted initial identity is game version 2.103, Unity 6000.3.2f1, x64 Mono.
 - OpenXR, camera changes, multiplayer behavior changes, and VR features are outside this plan.
