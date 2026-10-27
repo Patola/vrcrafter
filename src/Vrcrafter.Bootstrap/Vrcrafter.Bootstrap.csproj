@@ -20,5 +20,13 @@
       <HintPath>$(MSBuildThisFileDirectory)../../artifacts/deps/bepinex/BepInEx/core/MonoMod.Utils.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(TPC_GAME_DIR)/Planet Crafter_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(TPC_GAME_DIR)/Planet Crafter_Data/Managed/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 </Project>
