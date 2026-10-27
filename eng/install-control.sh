@@ -60,5 +60,5 @@ printf '[Chainloader]\nHideManagerGameObject = true\n' > "$staging/BepInEx/confi
 cp -a -- "$staging/." "$control_dir/"
 
 printf 'Installed the unmodified Doorstop/BepInEx control in %s\n' "$control_dir"
-printf 'Runtime remains manual: use stock Proton with WINEDLLOVERRIDES=winhttp=n,b and one managed game instance.\n'
+printf 'Runtime remains manual: use custom Proton without VRCRAFTER_ENABLE, with WINEDLLOVERRIDES=winhttp=n,b and one managed game instance.\n'
 printf 'No game, Steam, GUI, Wine, or Proton process was launched. Remove the copied depot after validation.\n'

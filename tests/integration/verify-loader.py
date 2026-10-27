@@ -142,11 +142,18 @@ def verify_gc_stress(text, host_thread):
         raise AssertionError("HOST_UPDATE thread changed")
 
     callbacks = list(re.finditer(
-        r"WORKER_DISPATCH source=gc-stress callback=(\d+) thread=(\d+)", text))
+        r"WORKER_DISPATCH source=gc-stress callback=(\d+) elapsed_ms=(\d+) thread=(\d+)", text))
     sequence = [int(match.group(1)) for match in callbacks]
-    if len(sequence) < 2 or sequence != list(range(1, len(sequence) + 1)):
+    if sequence != list(range(1, len(sequence) + 1)):
         raise AssertionError("GC callback sequence is not stable")
-    if any(match.group(2) != host_thread for match in callbacks):
+    if len(sequence) < 100:
+        raise AssertionError("GC stress requires at least 100 callbacks")
+    elapsed = [int(match.group(2)) for match in callbacks]
+    if elapsed != sorted(elapsed):
+        raise AssertionError("GC callback timing is not monotonic")
+    if elapsed[-1] - elapsed[0] < 25000:
+        raise AssertionError("GC callbacks must span at least 25 seconds")
+    if any(match.group(3) != host_thread for match in callbacks):
         raise AssertionError("GC callback did not run on the host thread")
 
     stress_start = find_marker(text, "GC_STRESS_START")
@@ -156,8 +163,11 @@ def verify_gc_stress(text, host_thread):
     result = require_pattern(
         text, r"GC_STRESS_OK duration_ms=(\d+) allocations=(\d+) callbacks=(\d+) thread=(\d+)",
         "GC stress result")
-    if int(result.group(1)) < 30000:
+    duration = int(result.group(1))
+    if duration < 30000:
         raise AssertionError("GC stress duration is shorter than 30 seconds")
+    if abs(duration - elapsed[-1]) > 2000:
+        raise AssertionError("final callback is not near GC stress completion")
     if int(result.group(2)) <= 0:
         raise AssertionError("GC stress allocated no objects")
     if int(result.group(3)) != len(callbacks):
@@ -167,14 +177,14 @@ def verify_gc_stress(text, host_thread):
 
 
 def verify(text, mode="direct"):
-    if mode not in ("direct", "stock", "chainloader"):
+    if mode not in ("direct", "control", "chainloader"):
         raise ValueError("unknown verification mode: " + mode)
 
-    if mode == "stock":
+    if mode == "control":
         require_ordered(text, CONTROL_MARKERS)
-        reject_markers(text, NATIVE_HOST_ONLY_MARKERS, "stock control")
+        reject_markers(text, NATIVE_HOST_ONLY_MARKERS, "custom-Proton control")
         reject_markers(text, ("BEPINEX_CHAINLOADER_OK", "BEPINEX_CHAINLOADER_ERROR"),
-                       "stock control")
+                       "custom-Proton control")
         return
 
     host_create = find_marker(text, "HOST_CREATE")
@@ -199,16 +209,57 @@ def verify(text, mode="direct"):
 
 
 def verify_disabled(text, process_exclusion=False):
-    reject_markers(text, ("START", "START_QUEUED", "MANAGED_ENTRY", "IDENTITY_ACCEPT",
-                          "HOST_CREATE", "HOST_UPDATE"), "disabled activation")
-    if not process_exclusion:
+    require_ordered(text, ("PROCESS", "ACTIVATION_SKIPPED"))
+    reject_markers(text, ("START", "START_QUEUED", "DEFERRED_START", "MONO_DOMAIN",
+                          "MANAGED_ENTRY", "MANAGED_RESULT", "PING", "IDENTITY_ACCEPT",
+                          "HARMONY_PATCH", "HOST_CREATE", "HOST_UPDATE", "WORKER_DISPATCH",
+                          "ORIGINAL_CONTINUES", "HOST_DESTROY"), "disabled activation")
+    if process_exclusion:
+        require_pattern(text, r"ACTIVATION_SKIPPED error=0 executable is not Planet Crafter\.exe",
+                        "PROCESS exclusion reason")
+        if re.search(r"PROCESS error=\d+ Planet Crafter\.exe\s*$", text, re.MULTILINE):
+            raise AssertionError("PROCESS exclusion used the game executable")
+    else:
+        require_pattern(text, r"ACTIVATION_SKIPPED error=0 VRCRAFTER_ENABLE is not 1",
+                        "kill-switch reason")
+        require_pattern(text, r"PROCESS error=0 Planet Crafter\.exe\s*$",
+                        "game process for kill-switch run")
+
+
+def verify_expected_failure(text, mode):
+    if mode == "missing-managed":
+        require_ordered(text, ("PROCESS", "START_QUEUED", "DEFERRED_START", "MONO_MODULE",
+                               "MONO_DOMAIN", "MANAGED_ASSEMBLY_OPEN"))
+        require_pattern(text, r"MANAGED_ASSEMBLY_OPEN error=2 .*Vrcrafter\.Bootstrap\.dll",
+                        "missing-managed assembly-open failure")
+        reject_markers(text, ("START", "MANAGED_ENTRY", "MANAGED_RESULT", "IDENTITY_ACCEPT",
+                              "HARMONY_PATCH", "HOST_CREATE"), "missing-managed run")
         return
 
-    require_ordered(text, ("PROCESS", "ACTIVATION_SKIPPED"))
-    require_pattern(text, r"ACTIVATION_SKIPPED error=0 executable is not Planet Crafter\.exe",
-                    "PROCESS exclusion reason")
-    if re.search(r"PROCESS error=\d+ Planet Crafter\.exe\s*$", text, re.MULTILINE):
-        raise AssertionError("PROCESS exclusion used the game executable")
+    if mode == "managed-exception":
+        require_single(text, "START")
+        require_single(text, "MANAGED_ENTRY")
+        require_pattern(text, r"EXCEPTION[^\r\n]*loader-self-test",
+                        "deliberate loader-self-test exception")
+        require_pattern(text, r"MANAGED_RESULT error=2 MANAGED_RESULT=2",
+                        "managed-exception result")
+    elif mode == "wrong-hash":
+        require_single(text, "START")
+        require_single(text, "MANAGED_ENTRY")
+        require_pattern(text, r"GAME_ASSEMBLY .*Assembly-CSharp", "wrong-hash game assembly")
+        actual = require_pattern(text, r"IDENTITY_HASH actual=([0-9a-f]{64})",
+                                 "actual wrong-game hash")
+        if actual.group(1) == "3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e":
+            raise AssertionError("wrong-hash run used the accepted game hash")
+        require_single(text, "IDENTITY_REJECT")
+        require_pattern(text, r"MANAGED_RESULT error=4 MANAGED_RESULT=4", "wrong-hash result")
+    else:
+        raise ValueError("unknown expected-failure mode: " + mode)
+
+    reject_markers(text, ("IDENTITY_ACCEPT", "HARMONY_PATCH", "HOST_CREATE"),
+                   mode + " run")
+    if re.search(r"MANAGED_RESULT=0(?![0-9])", text):
+        raise AssertionError("zero managed result is not valid for " + mode)
 
 
 def verify_acceptance(path):
@@ -216,14 +267,29 @@ def verify_acceptance(path):
         raise ValueError("acceptance path is not a directory: {0}".format(path))
 
     runs = (("normal", "direct"), ("clean-prefix", "direct"),
-            ("disabled", "disabled"), ("process-exclusion", "process-exclusion"))
+            ("disabled", "disabled"), ("process-exclusion", "process-exclusion"),
+            ("missing-managed", "expected-failure"),
+            ("managed-exception", "expected-failure"), ("wrong-hash", "expected-failure"),
+            ("control", "control"))
     for name, mode in runs:
         try:
             text = read_logs(path / name)
             if mode == "direct":
                 verify(text)
+            elif mode == "expected-failure":
+                verify_expected_failure(text, name)
+            elif mode == "control":
+                verify(text, "control")
             else:
                 verify_disabled(text, mode == "process-exclusion")
+            if name == "clean-prefix":
+                proton_log = path / name / "proton.log"
+                if not proton_log.is_file():
+                    raise AssertionError("missing clean-prefix Proton evidence: "
+                                         "Upgrading prefix from None")
+                proton_text = proton_log.read_text(encoding="utf-8", errors="replace")
+                require_pattern(proton_text, r"Upgrading prefix from None",
+                                "clean-prefix Proton evidence: Upgrading prefix from None")
         except (AssertionError, OSError, ValueError) as error:
             raise type(error)(name + ": " + str(error))
 
@@ -236,14 +302,17 @@ def main():
         mode = sys.argv[1]
         log_path = sys.argv[2]
     else:
-        print("usage: verify-loader.py [acceptance|direct|stock|chainloader] "
-              "LOG_FILE_OR_DIRECTORY", file=sys.stderr)
+        print("usage: verify-loader.py [acceptance|direct|control|chainloader|"
+              "missing-managed|managed-exception|wrong-hash] LOG_FILE_OR_DIRECTORY",
+              file=sys.stderr)
         return 2
 
     try:
         path = Path(log_path)
         if mode == "acceptance":
             verify_acceptance(path)
+        elif mode in ("missing-managed", "managed-exception", "wrong-hash"):
+            verify_expected_failure(read_logs(path), mode)
         else:
             verify(read_logs(path), mode)
     except (AssertionError, OSError, ValueError) as error:
@@ -251,8 +320,11 @@ def main():
         return 1
 
     markers = {"acceptance": MARKERS + STRESS_MARKERS,
-               "direct": MARKERS + STRESS_MARKERS, "stock": CONTROL_MARKERS,
-               "chainloader": MARKERS + STRESS_MARKERS + CHAINLOADER_MARKERS}[mode]
+               "direct": MARKERS + STRESS_MARKERS, "control": CONTROL_MARKERS,
+               "chainloader": MARKERS + STRESS_MARKERS + CHAINLOADER_MARKERS,
+               "missing-managed": ("MANAGED_ASSEMBLY_OPEN",),
+               "managed-exception": ("EXCEPTION", "MANAGED_RESULT=2"),
+               "wrong-hash": ("IDENTITY_REJECT", "MANAGED_RESULT=4")}[mode]
     print("LOADER_MARKERS_OK mode=" + mode + " ordered=" + ",".join(markers)
           + " negative=duplicates,exceptions,ordering,activation,GC")
     return 0

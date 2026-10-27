@@ -68,6 +68,7 @@ namespace Vrcrafter.Host
                         MainThreadQueue.Post(delegate
                         {
                             log("WORKER_DISPATCH source=gc-stress callback=" + callback
+                                + " elapsed_ms=" + stopwatch.ElapsedMilliseconds
                                 + " thread=" + Thread.CurrentThread.ManagedThreadId);
                         });
                         nextCallback += 250;
