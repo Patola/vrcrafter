@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vrcrafter.Bootstrap", "src\Vrcrafter.Bootstrap\Vrcrafter.Bootstrap.csproj", "{8D3D17D5-E517-4C36-99E3-F59815A8C5D9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vrcrafter.Host", "src\Vrcrafter.Host\Vrcrafter.Host.csproj", "{D68E0C25-88C3-4F98-8BA7-10F6E2E12E56}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,6 +16,10 @@ Global
 		{8D3D17D5-E517-4C36-99E3-F59815A8C5D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D3D17D5-E517-4C36-99E3-F59815A8C5D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D3D17D5-E517-4C36-99E3-F59815A8C5D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D68E0C25-88C3-4F98-8BA7-10F6E2E12E56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D68E0C25-88C3-4F98-8BA7-10F6E2E12E56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D68E0C25-88C3-4F98-8BA7-10F6E2E12E56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D68E0C25-88C3-4F98-8BA7-10F6E2E12E56}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -19,6 +19,8 @@ namespace Vrcrafter.Bootstrap
                     ManagedLog.Write("ASSEMBLY " + assembly.FullName);
                 }
 
+                HarmonyBootstrap.Install();
+
                 int ping = NativeBridge.Ping(41);
                 ManagedLog.Write("PING=" + ping);
                 return ping == 42 ? 0 : 3;
