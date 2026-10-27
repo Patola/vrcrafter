@@ -312,7 +312,7 @@ python3 tests/integration/verify-loader.py control "$ACCEPT/control"
 python3 tests/integration/verify-loader.py "$ACCEPT"
 ```
 
-Acceptance requires all eight directories: `normal`, `clean-prefix`, `disabled`, `process-exclusion`, `missing-managed`, `managed-exception`, `wrong-hash`, and `control`. Expected failures must match their specific signatures: `MANAGED_ASSEMBLY_OPEN error=2`; `loader-self-test` with result 2; or the actual pinned game hash, `IDENTITY_REJECT`, and result 4. Empty, unrelated, or success-contaminated evidence fails.
+Acceptance requires all eight directories: `normal`, `clean-prefix`, `disabled`, `process-exclusion`, `missing-managed`, `managed-exception`, `wrong-hash`, and `control`. Expected failures must match their specific signatures: `MANAGED_ASSEMBLY_OPEN error=2`; `loader-self-test` with result 2; or the actual pinned game hash, `IDENTITY_REJECT`, and result 4. Empty, unrelated, or success-contaminated evidence fails. General marker checks exclude `proton.log` and `steam-*.log`, so unrelated Proton/.NET messages cannot masquerade as managed failures; clean-prefix creation evidence is read separately from its `proton.log`.
 
 Expected ordered direct markers are:
 

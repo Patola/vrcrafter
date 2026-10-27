@@ -215,6 +215,24 @@ class AcceptanceVerificationTests(unittest.TestCase):
     def test_accepts_complete_isolated_acceptance_matrix(self):
         verify_loader.verify_acceptance(self.root)
 
+    def test_ignores_unrelated_proton_exceptions_in_marker_checks(self):
+        for name in ("proton.log", "steam-1284190.log"):
+            (self.root / "normal" / name).write_text(
+                "Xalia .NET EXCEPTION handling\n", encoding="utf-8")
+        with (self.root / "clean-prefix" / "proton.log").open("a", encoding="utf-8") as log:
+            log.write("Xalia .NET EXCEPTION handling\n")
+        verify_loader.verify_acceptance(self.root)
+
+    def test_rejects_real_managed_exception_with_proton_logs_present(self):
+        for name in ("proton.log", "steam-1284190.log"):
+            (self.root / "normal" / name).write_text(
+                "Xalia .NET EXCEPTION handling\n", encoding="utf-8")
+        path = self.root / "normal" / "managed.log"
+        path.write_text(path.read_text(encoding="utf-8") + "\nEXCEPTION real-managed-failure\n",
+                        encoding="utf-8")
+        with self.assertRaisesRegex(AssertionError, "normal: EXCEPTION is not valid"):
+            verify_loader.verify_acceptance(self.root)
+
     def test_rejects_missing_kill_switch_run(self):
         (self.root / "disabled" / "managed.log").unlink()
         with self.assertRaisesRegex(ValueError, "disabled.*no log files"):

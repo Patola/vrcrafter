@@ -71,11 +71,17 @@ NATIVE_HOST_ONLY_MARKERS = MARKERS[:-1] + STRESS_MARKERS + (
 )
 
 
+def is_marker_log(path):
+    return path.name != "proton.log" and not (
+        path.name.startswith("steam-") and path.name.endswith(".log"))
+
+
 def read_logs(path):
     if path.is_file():
-        files = [path]
+        files = [path] if is_marker_log(path) else []
     elif path.is_dir():
-        files = sorted(candidate for candidate in path.rglob("*.log") if candidate.is_file())
+        files = sorted(candidate for candidate in path.rglob("*.log")
+                       if candidate.is_file() and is_marker_log(candidate))
     else:
         raise ValueError("log path does not exist: {0}".format(path))
 
