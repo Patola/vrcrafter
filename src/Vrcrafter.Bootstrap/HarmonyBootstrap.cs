@@ -1,8 +1,10 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using HarmonyLib;
 using UnityEngine;
+using Vrcrafter.BepInExBridge;
 using Vrcrafter.Host;
 
 namespace Vrcrafter.Bootstrap
@@ -79,11 +81,22 @@ namespace Vrcrafter.Bootstrap
                 UnityEngine.Object.DontDestroyOnLoad(hostObject);
                 ManagedLog.Write("HOST_CREATE thread=" + threadId);
                 harmony.Unpatch(original, postfix);
+                if (String.Equals(Environment.GetEnvironmentVariable("VRCRAFTER_BEPINEX"), "1",
+                    StringComparison.Ordinal))
+                {
+                    StartOptionalChainloader();
+                }
             }
             catch (Exception ex)
             {
                 ManagedLog.Write("EXCEPTION " + ex);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void StartOptionalChainloader()
+        {
+            ChainloaderBridge.Start();
         }
     }
 }
