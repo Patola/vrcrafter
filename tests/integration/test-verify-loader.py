@@ -52,7 +52,6 @@ def missing_managed_run():
 def managed_exception_run():
     return "\n".join((
         "[10] MANAGED_ENTRY error=0 Vrcrafter.Bootstrap.EntryPoint.Start():int",
-        "START pid=10",
         "EXCEPTION System.InvalidOperationException: loader-self-test",
         "[10] MANAGED_RESULT error=2 MANAGED_RESULT=2",
     ))
@@ -143,6 +142,17 @@ class ExpectedFailureVerificationTests(unittest.TestCase):
         verify_loader.verify_expected_failure(managed_exception_run(), "managed-exception")
         verify_loader.verify_expected_failure(wrong_hash_run(), "wrong-hash")
         verify_loader.verify(control_run(), "control")
+
+    def test_accepts_early_managed_exception_without_start(self):
+        text = managed_exception_run()
+        self.assertNotIn("START pid=", text)
+        verify_loader.verify_expected_failure(text, "managed-exception")
+
+    def test_early_exception_rejects_identity_and_host_success(self):
+        for marker in ("IDENTITY_ACCEPT", "HOST_CREATE"):
+            with self.assertRaisesRegex(AssertionError, marker + " is not valid"):
+                verify_loader.verify_expected_failure(
+                    managed_exception_run() + "\n" + marker, "managed-exception")
 
     def test_rejects_unrelated_managed_exception(self):
         with self.assertRaisesRegex(AssertionError, "loader-self-test"):

@@ -239,7 +239,6 @@ def verify_expected_failure(text, mode):
         return
 
     if mode == "managed-exception":
-        require_single(text, "START")
         require_single(text, "MANAGED_ENTRY")
         require_pattern(text, r"EXCEPTION[^\r\n]*loader-self-test",
                         "deliberate loader-self-test exception")
