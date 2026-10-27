@@ -58,13 +58,16 @@ def managed_exception_run():
     ))
 
 
+PINNED_GAME_HASH = "3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e"
+
+
 def wrong_hash_run():
     return "\n".join((
         "[10] MANAGED_ENTRY error=0 Vrcrafter.Bootstrap.EntryPoint.Start():int",
         "START pid=10",
         "GAME_ASSEMBLY Assembly-CSharp path=S:\\Assembly-CSharp.dll",
         "IDENTITY_DETAIL executable=True unity=True",
-        "IDENTITY_HASH actual=0000000000000000000000000000000000000000000000000000000000000000",
+        "IDENTITY_HASH actual=" + PINNED_GAME_HASH,
         "IDENTITY_REJECT",
         "[10] MANAGED_RESULT error=4 MANAGED_RESULT=4",
     ))
@@ -140,13 +143,26 @@ class ExpectedFailureVerificationTests(unittest.TestCase):
                 "managed-exception")
 
     def test_rejects_unavailable_wrong_hash(self):
-        text = wrong_hash_run().replace("0" * 64, "<unavailable>")
+        text = wrong_hash_run().replace(PINNED_GAME_HASH, "<unavailable>")
         with self.assertRaisesRegex(AssertionError, "actual wrong-game hash"):
+            verify_loader.verify_expected_failure(text, "wrong-hash")
+
+    def test_rejects_wrong_hash_when_actual_is_not_pinned_game(self):
+        text = wrong_hash_run().replace(PINNED_GAME_HASH, "0" * 64)
+        with self.assertRaisesRegex(AssertionError, "actual pinned game hash"):
             verify_loader.verify_expected_failure(text, "wrong-hash")
 
     def test_control_rejects_native_host(self):
         with self.assertRaisesRegex(AssertionError, "not valid for custom-Proton control"):
             verify_loader.verify(control_run() + "\nMANAGED_ENTRY error=0", "control")
+
+
+class DocumentationTests(unittest.TestCase):
+    def test_mono_import_needle_matches_lowercased_objdump_output(self):
+        readme = (Path(__file__).resolve().parents[2] / "README.md").read_text(
+            encoding="utf-8")
+        self.assertIn('assert "dll name: mono" not in output.lower()', readme)
+        self.assertNotIn('assert "DLL Name: mono" not in output.lower()', readme)
 
 
 class AcceptanceVerificationTests(unittest.TestCase):

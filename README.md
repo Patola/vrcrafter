@@ -109,7 +109,7 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 def exports(path):
     output = subprocess.check_output(["objdump", "-p", str(path)], text=True)
-    assert "DLL Name: mono" not in output.lower()
+    assert "dll name: mono" not in output.lower()
     return set(module.extract_exports(output))
 backend = exports(Path("artifacts/payload/vrcrafter-winhttp-backend.dll"))
 proxy = exports(Path("artifacts/payload/winhttp.dll"))
@@ -248,7 +248,7 @@ Run in this order, restoring normal files after each intentional failure:
    bash eng/build-managed.sh && bash eng/install-local.sh
    ```
 
-5. **Wrong game hash:** preserve the source, replace only the expected hash with 64 zeroes, rebuild/install, run, then restore and rebuild/install immediately. The evidence must contain the actual nonmatching 64-digit hash, `IDENTITY_REJECT`, and `MANAGED_RESULT=4`:
+5. **Wrong game hash:** preserve the source, replace only the expected hash with 64 zeroes, rebuild/install, run, then restore and rebuild/install immediately. Because the untouched game still has the pinned real hash, the evidence must contain `IDENTITY_HASH actual=3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e`, `IDENTITY_REJECT`, and `MANAGED_RESULT=4`:
 
    ```bash
    cp -- src/Vrcrafter.Bootstrap/GameIdentity.cs artifacts/GameIdentity.cs.task9-backup
@@ -312,7 +312,7 @@ python3 tests/integration/verify-loader.py control "$ACCEPT/control"
 python3 tests/integration/verify-loader.py "$ACCEPT"
 ```
 
-Acceptance requires all eight directories: `normal`, `clean-prefix`, `disabled`, `process-exclusion`, `missing-managed`, `managed-exception`, `wrong-hash`, and `control`. Expected failures must match their specific signatures: `MANAGED_ASSEMBLY_OPEN error=2`; `loader-self-test` with result 2; or an actual wrong hash, `IDENTITY_REJECT`, and result 4. Empty, unrelated, or success-contaminated evidence fails.
+Acceptance requires all eight directories: `normal`, `clean-prefix`, `disabled`, `process-exclusion`, `missing-managed`, `managed-exception`, `wrong-hash`, and `control`. Expected failures must match their specific signatures: `MANAGED_ASSEMBLY_OPEN error=2`; `loader-self-test` with result 2; or the actual pinned game hash, `IDENTITY_REJECT`, and result 4. Empty, unrelated, or success-contaminated evidence fails.
 
 Expected ordered direct markers are:
 

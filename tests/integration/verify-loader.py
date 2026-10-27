@@ -249,8 +249,8 @@ def verify_expected_failure(text, mode):
         require_pattern(text, r"GAME_ASSEMBLY .*Assembly-CSharp", "wrong-hash game assembly")
         actual = require_pattern(text, r"IDENTITY_HASH actual=([0-9a-f]{64})",
                                  "actual wrong-game hash")
-        if actual.group(1) == "3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e":
-            raise AssertionError("wrong-hash run used the accepted game hash")
+        if actual.group(1) != "3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e":
+            raise AssertionError("wrong-hash run did not contain the actual pinned game hash")
         require_single(text, "IDENTITY_REJECT")
         require_pattern(text, r"MANAGED_RESULT error=4 MANAGED_RESULT=4", "wrong-hash result")
     else:
