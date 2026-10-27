@@ -45,6 +45,7 @@ static DWORD WINAPI deferred_start(void *context)
 {
     (void)context;
     (void)VrcrafterStart();
+    (void)WaitForSingleObject(GetCurrentProcess(), INFINITE);
     return 0;
 }
 
