@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <TPC_GAME_DIR Condition="'$(TPC_GAME_DIR)' == ''">/games/SteamLibrary/steamapps/common/The Planet Crafter</TPC_GAME_DIR>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

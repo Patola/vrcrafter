@@ -1,0 +1,27 @@
+{
+  "game": {
+    "appid": "1284190",
+    "version": "2.103",
+    "unity": "6000.3.2f1",
+    "assemblyCSharpSha256": "3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e"
+  },
+  "allowedLicenses": ["MIT", "LGPL-2.1-only-control"],
+  "dependencies": [
+    {
+      "name": "BepInEx",
+      "version": "5.4.23.5",
+      "license": "MIT",
+      "url": "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_win_x64_5.4.23.5.zip",
+      "sha256": "82f9878551030f54657792c0740d9d51a09500eeae1fba21106b0c441e6732c4",
+      "role": "managed-core-and-control"
+    },
+    {
+      "name": "UnityDoorstop",
+      "version": "4.3.0",
+      "license": "LGPL-2.1-only-control",
+      "url": "https://github.com/NeighTools/UnityDoorstop/releases/download/v4.3.0/doorstop_win_release_4.3.0.zip",
+      "sha256": "e23fec7a6adfa07ba26a3e209b617584d0319a1145506ae4e1b892c44e86f679",
+      "role": "control-only"
+    }
+  ]
+}
