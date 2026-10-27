@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace Vrcrafter.Bootstrap
 {
@@ -14,6 +15,8 @@ namespace Vrcrafter.Bootstrap
         private const string ExpectedAssemblyHash =
             "3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e";
         private const int UnityVersionReadLimit = 64 * 1024;
+        private const int GameAssemblyWaitAttempts = 1200;
+        private const int GameAssemblyWaitDelayMilliseconds = 100;
 
         public static bool Validate()
         {
@@ -28,17 +31,7 @@ namespace Vrcrafter.Bootstrap
                     executablePath = process.MainModule.FileName;
                 }
 
-                Assembly gameAssembly = null;
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    if (String.Equals(assembly.GetName().Name, "Assembly-CSharp",
-                        StringComparison.Ordinal))
-                    {
-                        gameAssembly = assembly;
-                        break;
-                    }
-                }
-
+                Assembly gameAssembly = WaitForGameAssembly();
                 if (gameAssembly == null)
                 {
                     ManagedLog.Write("IDENTITY_DETAIL Assembly-CSharp is not loaded");
@@ -66,6 +59,44 @@ namespace Vrcrafter.Bootstrap
             ManagedLog.Write("IDENTITY_HASH actual=" + actualHash);
             ManagedLog.Write(accepted ? "IDENTITY_ACCEPT" : "IDENTITY_REJECT");
             return accepted;
+        }
+
+        private static Assembly WaitForGameAssembly()
+        {
+            Assembly gameAssembly = FindLoadedGameAssembly();
+            if (gameAssembly != null)
+            {
+                return gameAssembly;
+            }
+
+            ManagedLog.Write("IDENTITY_WAIT Assembly-CSharp timeout=120s");
+            for (int attempt = 0; attempt < GameAssemblyWaitAttempts; attempt++)
+            {
+                Thread.Sleep(GameAssemblyWaitDelayMilliseconds);
+                gameAssembly = FindLoadedGameAssembly();
+                if (gameAssembly != null)
+                {
+                    ManagedLog.Write("IDENTITY_WAIT_READY Assembly-CSharp");
+                    return gameAssembly;
+                }
+            }
+
+            ManagedLog.Write("IDENTITY_WAIT_TIMEOUT Assembly-CSharp after=120s");
+            return null;
+        }
+
+        private static Assembly FindLoadedGameAssembly()
+        {
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (String.Equals(assembly.GetName().Name, "Assembly-CSharp",
+                    StringComparison.Ordinal))
+                {
+                    return assembly;
+                }
+            }
+
+            return null;
         }
 
         private static bool HasExpectedUnityVersion(string executablePath)
