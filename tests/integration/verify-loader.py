@@ -12,6 +12,25 @@ MARKERS = (
     "ORIGINAL_CONTINUES",
 )
 
+CONTROL_MARKERS = (
+    "BEPINEX_CONTROL_OK",
+    "BEPINEX_CONTROL_HARMONY_OK",
+    "ORIGINAL_CONTINUES",
+)
+
+CHAINLOADER_MARKERS = (
+    "BEPINEX_CONTROL_OK",
+    "BEPINEX_CHAINLOADER_OK",
+    "BEPINEX_CONTROL_HARMONY_OK",
+    "ORIGINAL_CONTINUES",
+)
+
+NATIVE_HOST_ONLY_MARKERS = MARKERS[:-1] + (
+    "HOST_DESTROY",
+    "RESOLVER_INSTALL",
+    "PING",
+)
+
 
 def read_logs(path):
     if path.is_file():
@@ -33,35 +52,68 @@ def find_marker(text, marker, start=0):
     return start + match.start()
 
 
-def verify(text):
-    host_create = find_marker(text, "HOST_CREATE")
-    host_update = find_marker(text, "HOST_UPDATE")
-    if host_update >= 0 and (host_create < 0 or host_update < host_create):
-        raise AssertionError("HOST_UPDATE appears before HOST_CREATE")
-
-    cursor = 0
+def require_ordered(text, markers, start=0):
+    cursor = start
     previous = None
-    for marker in MARKERS:
+    for marker in markers:
         position = find_marker(text, marker, cursor)
         if position < 0:
             requirement = " after " + previous if previous is not None else ""
             raise AssertionError("missing " + marker + requirement)
         cursor = position + len(marker)
         previous = marker
+    return cursor
+
+
+def reject_markers(text, markers, classification):
+    for marker in markers:
+        if find_marker(text, marker) >= 0:
+            raise AssertionError(marker + " is not valid for " + classification)
+
+
+def verify(text, mode="direct"):
+    if mode not in ("direct", "stock", "chainloader"):
+        raise ValueError("unknown verification mode: " + mode)
+
+    if mode == "stock":
+        require_ordered(text, CONTROL_MARKERS)
+        reject_markers(text, NATIVE_HOST_ONLY_MARKERS, "stock control")
+        reject_markers(text, ("BEPINEX_CHAINLOADER_OK", "BEPINEX_CHAINLOADER_ERROR"),
+                       "stock control")
+        return
+
+    host_create = find_marker(text, "HOST_CREATE")
+    host_update = find_marker(text, "HOST_UPDATE")
+    if host_update >= 0 and (host_create < 0 or host_update < host_create):
+        raise AssertionError("HOST_UPDATE appears before HOST_CREATE")
+
+    cursor = require_ordered(text, MARKERS)
+    if mode == "chainloader":
+        reject_markers(text, ("BEPINEX_CHAINLOADER_ERROR",), "Chainloader success")
+        require_ordered(text, CHAINLOADER_MARKERS, cursor)
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("usage: verify-loader.py LOG_FILE_OR_DIRECTORY", file=sys.stderr)
+    if len(sys.argv) == 2:
+        mode = "direct"
+        log_path = sys.argv[1]
+    elif len(sys.argv) == 3:
+        mode = sys.argv[1]
+        log_path = sys.argv[2]
+    else:
+        print("usage: verify-loader.py [direct|stock|chainloader] LOG_FILE_OR_DIRECTORY",
+              file=sys.stderr)
         return 2
 
     try:
-        verify(read_logs(Path(sys.argv[1])))
+        verify(read_logs(Path(log_path)), mode)
     except (AssertionError, OSError, ValueError) as error:
         print("FAIL " + str(error), file=sys.stderr)
         return 1
 
-    print("LOADER_MARKERS_OK ordered=" + ",".join(MARKERS)
+    markers = {"direct": MARKERS, "stock": CONTROL_MARKERS,
+               "chainloader": MARKERS + CHAINLOADER_MARKERS}[mode]
+    print("LOADER_MARKERS_OK mode=" + mode + " ordered=" + ",".join(markers)
           + " negative=HOST_UPDATE-before-HOST_CREATE")
     return 0
 
