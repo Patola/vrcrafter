@@ -59,7 +59,7 @@ This is the lowest-risk distribution option and will be retained as a fallback. 
 
 UUVR Mono Modern provides useful OpenXR and camera infrastructure, but current released UUVR intentionally disables positional tracking and applies rotation-only poses. Motion-controller emulation is unfinished. Its generic camera handling does not establish Planet Crafter-specific camera ownership, tool attachment, or interaction behavior.
 
-UUVR remains a reference and possible source of reusable GPL-compatible infrastructure. Any copied or derived code must preserve its copyright/license notices and result in GPL-compatible distribution. Game-specific behavior will not be delegated to UUVR configuration alone.
+UUVR is excluded as an implementation dependency. No UUVR source code, assets, patches, or derived implementation will be copied into or linked with this project. Its observed behavior and public documentation may inform requirements and diagnosis, but OpenXR initialization, camera handling, tracking, and input will be implemented independently from OpenXR/Unity specifications and MIT-compatible sources. Game-specific behavior will not be delegated to UUVR configuration alone.
 
 ### Custom Proton with CoreCLR and IPC
 
@@ -243,6 +243,14 @@ Using a private session with an unmodified flatscreen client, test both VR-host/
 
 Results must match vanilla gameplay rules and state on both clients. Merely joining a server is not sufficient evidence of compatibility.
 
+## Licensing
+
+All project-owned source code and assets are licensed under the MIT License in the repository's `LICENSE` file. The canonical repository is `https://github.com/Patola/vrcrafter`.
+
+UUVR and other copyleft VR-mod implementations are not code or asset sources for this project. Do not copy, translate, port, or derive implementation from their source. Implementation must use public API specifications, engine documentation, observed behavior, and dependencies whose licenses are compatible with MIT-licensed project code. Record third-party dependencies and their licenses with the corresponding component.
+
+MIT licensing applies to project-owned code; it does not relicense upstream Proton/Wine, BepInEx, Unity, or other third-party components. Their existing license and notice obligations still apply. In particular, modifications distributed within the Proton/Wine fork remain subject to the upstream component licenses even when the separately developed VR mod and original integration files are MIT-licensed. Proprietary game assemblies are compile-time references only and are not redistributed.
+
 ## Build and maintenance strategy
 
 - Build native code through Proton's pinned containerized SDK and managed code with the Linux .NET SDK.
@@ -250,7 +258,7 @@ Results must match vanilla gameplay rules and state on both clients. Merely join
 - Keep the custom Proton separate from stock Proton and distribute it as a distinct compatibility tool.
 - Pin the Proton/Wine baseline and rebase launcher changes deliberately rather than tracking updates automatically.
 - Keep game-specific Harmony patches isolated from reusable loader and VR-core code so game and Proton upgrades can be diagnosed independently.
-- Preserve source offers and license notices for modified Proton/Wine components and any reused third-party code.
+- Preserve source offers and license notices for modified Proton/Wine components and all third-party dependencies.
 
 ## Primary references
 
@@ -261,9 +269,6 @@ Results must match vanilla gameplay rules and state on both clients. Merely join
 - [Harmony patching edge cases](https://harmony.pardeike.net/articles/patching-edgecases.html)
 - [BepInEx Chainloader](https://github.com/BepInEx/BepInEx/blob/v5-lts/BepInEx/Bootstrap/Chainloader.cs)
 - [Proton 11.0-2 source and build instructions](https://github.com/ValveSoftware/Proton/tree/proton-11.0-2)
-- [UUVR source](https://github.com/Raicuparta/uuvr)
-- [UUVR experimental 6DOF PR](https://github.com/Raicuparta/uuvr/pull/38)
-- [VHVR camera and game-specific implementation](https://github.com/brandonmousseau/vhvr-mod)
 - [Unity OpenXR 1.14 documentation](https://docs.unity3d.com/Packages/com.unity.xr.openxr@1.14/manual/index.html)
 - [WiVRn Steam documentation](https://github.com/WiVRn/WiVRn/blob/master/docs/steamvr.md)
 - [Existing Planet Crafter BepInEx/Harmony mods](https://github.com/akarnokd/ThePlanetCrafterMods)
