@@ -17,10 +17,10 @@
     },
     {
       "name": "UnityDoorstop",
-      "version": "4.3.0",
+      "version": "4.6.0",
       "license": "LGPL-2.1-only-control",
-      "url": "https://github.com/NeighTools/UnityDoorstop/releases/download/v4.3.0/doorstop_win_release_4.3.0.zip",
-      "sha256": "e23fec7a6adfa07ba26a3e209b617584d0319a1145506ae4e1b892c44e86f679",
+      "url": "https://github.com/NeighTools/UnityDoorstop/releases/download/v4.6.0/doorstop_win_release_4.6.0.zip",
+      "sha256": "d423e73e4a92cb168565ac53031f04082daa17133057e53c24343d580c260b25",
       "role": "control-only"
     }
   ]
