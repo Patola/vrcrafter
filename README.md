@@ -79,7 +79,7 @@ Optional `VRCRAFTER_PAYLOAD` and `VRCRAFTER_LOG_DIR` launch-option overrides use
 
 ## Validation status and acceptance diagnostics
 
-The direct custom-Proton run has demonstrated identity acceptance, Harmony patching, `PING=42`, host ticks, worker dispatch, original-method continuation, and `HOST_DESTROY`. The new 30-second GC stress run, expanded acceptance matrix, clean-prefix run, and optional Chainloader runtime remain **unverified**. Source checks do not prove runtime behavior, VR, OpenXR, stereo rendering, or multiplayer compatibility.
+Custom-Proton runtime validation has demonstrated identity acceptance, Harmony patching, `PING=42`, host ticks, worker dispatch, original-method continuation, 30-second GC stress with 120 main-thread callbacks, clean host destruction, optional Chainloader startup, and the Doorstop 4.6.0 control. The complete verifier matrix passed normal direct, clean-prefix direct, disabled, process-exclusion, missing-managed, deliberate managed-exception, wrong-hash, and custom-Proton Doorstop control cases. VR, OpenXR, stereo rendering, and multiplayer compatibility remain **unverified** and are outside this loader milestone.
 
 Every game launch requires explicit per-launch user permission and at most one game instance. Use a backed-up private test save. Do not launch the game as part of source builds or verifier tests, and do not use stock Proton for game validation. Confirm that no `BepInEx` directory or `winhttp.dll` appears in the game installation.
 
