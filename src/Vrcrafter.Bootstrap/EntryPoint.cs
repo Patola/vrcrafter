@@ -30,7 +30,13 @@ namespace Vrcrafter.Bootstrap
             }
             catch (Exception ex)
             {
-                ManagedLog.Write("EXCEPTION " + ex);
+                try
+                {
+                    ManagedLog.Write("EXCEPTION " + ex);
+                }
+                catch (Exception)
+                {
+                }
                 return 2;
             }
         }

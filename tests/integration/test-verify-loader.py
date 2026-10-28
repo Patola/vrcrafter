@@ -15,10 +15,13 @@ def successful_run(callback_count=120, callback_interval=250, tick_stride=1):
     lines = [
         "[10] PROCESS error=0 Planet Crafter.exe",
         "[10] START_QUEUED error=0 deferred entry queued",
+        "[10] MONO_MODULE error=0 mono-2.0-bdwgc.dll",
+        "[10] MONO_DOMAIN error=0 existing root domain attached",
         "[10] MANAGED_ENTRY error=0 Vrcrafter.Bootstrap.EntryPoint.Start():int",
         "START pid=10",
         "IDENTITY_ACCEPT",
         "HARMONY_PATCH owner=test thread=3",
+        "PING=42",
         "HOST_CREATE thread=1",
         "HOST_UPDATE tick=1 thread=1",
         "WORKER_DISPATCH thread=1",
@@ -86,6 +89,43 @@ class DirectVerificationTests(unittest.TestCase):
 
     def test_accepts_complete_run(self):
         verify_loader.verify(successful_run())
+
+    def test_rejects_missing_duplicate_and_failed_mono_module(self):
+        successful = "[10] MONO_MODULE error=0 mono-2.0-bdwgc.dll"
+        cases = (
+            (successful_run().replace(successful + "\n", ""), "missing MONO_MODULE"),
+            (successful_run() + "\n" + successful, "duplicate MONO_MODULE"),
+            (successful_run().replace(successful,
+                                      "[10] MONO_MODULE error=1 mono-2.0-bdwgc.dll"),
+             "successful MONO_MODULE"),
+        )
+        for text, message in cases:
+            with self.subTest(message=message):
+                self.assertRejected(text, message)
+
+    def test_rejects_missing_duplicate_and_failed_mono_domain(self):
+        successful = "[10] MONO_DOMAIN error=0 existing root domain attached"
+        cases = (
+            (successful_run().replace(successful + "\n", ""), "missing MONO_DOMAIN"),
+            (successful_run() + "\n" + successful, "duplicate MONO_DOMAIN"),
+            (successful_run().replace(successful,
+                                      "[10] MONO_DOMAIN error=1 existing root domain attached"),
+             "successful MONO_DOMAIN"),
+        )
+        for text, message in cases:
+            with self.subTest(message=message):
+                self.assertRejected(text, message)
+
+    def test_rejects_missing_duplicate_and_inexact_ping(self):
+        cases = (
+            (successful_run().replace("PING=42\n", ""), "exact PING=42"),
+            (successful_run() + "\nPING=42", "duplicate PING=42"),
+            (successful_run().replace("PING=42", "PING=41"), "exact PING=42"),
+            (successful_run().replace("PING=42", "PING=42\nPING=41"), "exact PING=42"),
+        )
+        for text, message in cases:
+            with self.subTest(message=message):
+                self.assertRejected(text, message)
 
     def test_rejects_duplicate_initialization(self):
         self.assertRejected(successful_run() + "\nSTART pid=10", "duplicate START")

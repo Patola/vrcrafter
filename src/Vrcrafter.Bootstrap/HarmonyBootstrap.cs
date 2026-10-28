@@ -80,7 +80,6 @@ namespace Vrcrafter.Bootstrap
                 hostObject.AddComponent<VrcrafterHost>();
                 UnityEngine.Object.DontDestroyOnLoad(hostObject);
                 ManagedLog.Write("HOST_CREATE thread=" + threadId);
-                harmony.Unpatch(original, postfix);
                 if (String.Equals(Environment.GetEnvironmentVariable("VRCRAFTER_BEPINEX"), "1",
                     StringComparison.Ordinal))
                 {
@@ -90,6 +89,10 @@ namespace Vrcrafter.Bootstrap
             catch (Exception ex)
             {
                 ManagedLog.Write("EXCEPTION " + ex);
+            }
+            finally
+            {
+                harmony.Unpatch(original, postfix);
             }
         }
 

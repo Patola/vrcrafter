@@ -43,7 +43,7 @@ bash eng/build-native.sh
 PROTON_CONTAINER_ENGINE=podman bash eng/build-proton.sh
 ```
 
-`eng/build-native.sh` reads the pinned Wine builtin from `PROTON_DIR` (default: `$HOME/.local/share/Steam/steamapps/common/Proton 11.0`) to construct the forwarding backend. This is a build input only, not game validation.
+`eng/build-native.sh` reads the Wine builtin from `PROTON_DIR` (default: `$HOME/.local/share/Steam/steamapps/common/Proton 11.0`) to construct the forwarding backend. Before copying or generating exports, it verifies the SHA-256 recorded with the Proton 11.0-2 source revision in `eng/dependencies.lock.json`; a stock update or modified backend fails the build until the pristine input and pin are explicitly reviewed. This is a build input only, not game validation.
 
 `eng/build-proton.sh` verifies the Proton commit, applies `proton/patches/0001-vrcrafter-launcher.patch` with `git apply --check`, configures an out-of-tree build in `artifacts/proton-build`, runs `make dist`, and stages the result at:
 
@@ -92,8 +92,10 @@ bash eng/build-managed.sh
 bash eng/build-native.sh
 python3 eng/check_licenses.py
 python3 tests/integration/test-verify-loader.py
-python3 -m py_compile tests/integration/verify-loader.py tests/integration/test-verify-loader.py
-bash -n eng/install-control.sh
+python3 tests/integration/test-final-review.py
+python3 tests/integration/test-task8-static.py
+python3 -m py_compile tests/integration/verify-loader.py tests/integration/test-verify-loader.py tests/integration/test-final-review.py
+bash -n eng/build-native.sh eng/install-control.sh
 git diff --check
 ```
 
@@ -321,7 +323,7 @@ IDENTITY_ACCEPT HARMONY_PATCH HOST_CREATE HOST_UPDATE WORKER_DISPATCH ORIGINAL_C
 GC_STRESS_START HOST_UPDATE WORKER_DISPATCH GC_STRESS_OK HOST_DESTROY
 ```
 
-The GC diagnostic allocates for at least 30 seconds and posts every 250 ms. Verification requires at least 100 contiguous same-thread callbacks, `elapsed_ms` spanning at least 25 seconds, and a final callback within two seconds of the reported completion. Sparse host ticks are valid when their positive numbers are strictly increasing on an unchanged host thread; allocation count must be positive and callback count exact. A successful verifier prints `LOADER_MARKERS_OK`; no runtime marker is claimed from source checks.
+Direct success also requires exactly one successful `MONO_MODULE error=0`, one successful `MONO_DOMAIN error=0`, and exactly one `PING=42`; these independent checks do not assume ordering between native and managed log files. The GC diagnostic allocates for at least 30 seconds and posts every 250 ms. Verification requires at least 100 contiguous same-thread callbacks, `elapsed_ms` spanning at least 25 seconds, and a final callback within two seconds of the reported completion. Sparse host ticks are valid when their positive numbers are strictly increasing on an unchanged host thread; allocation count must be positive and callback count exact. A successful verifier prints `LOADER_MARKERS_OK`; no runtime marker is claimed from source checks.
 
 The optional Chainloader bridge can be checked separately with `python3 tests/integration/verify-loader.py chainloader LOG_DIRECTORY` after its runtime evidence exists. Programmatic `Chainloader.Initialize`/`Start` is **not Cecil preloader-patcher compatibility**: it does not establish preloader-patcher execution or general BepInEx compatibility.
 

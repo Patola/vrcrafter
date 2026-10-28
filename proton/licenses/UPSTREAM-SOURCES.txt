@@ -27,3 +27,7 @@ https://github.com/MonoMod/MonoMod/blob/master/LICENSE
 Mono.Cecil source and MIT notice:
 https://github.com/jbevain/cecil
 https://github.com/jbevain/cecil/blob/master/LICENSE.txt
+
+UnityDoorstop 4.6.0 source and LGPL-2.1 notice:
+https://github.com/NeighTools/UnityDoorstop/tree/v4.6.0
+https://github.com/NeighTools/UnityDoorstop/blob/v4.6.0/LICENSE

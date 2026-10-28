@@ -36,12 +36,20 @@ done
 
 bepinex_dir="$root_dir/artifacts/deps/bepinex"
 doorstop_dir="$root_dir/artifacts/deps/doorstop/x64"
+license_dir="$root_dir/proton/licenses"
 control_plugin="$root_dir/src/Vrcrafter.BepInExControl/bin/Release/net48/Vrcrafter.BepInExControl.dll"
 for required in \
     "$bepinex_dir/BepInEx/core/BepInEx.dll" \
     "$bepinex_dir/BepInEx/core/0Harmony.dll" \
     "$bepinex_dir/doorstop_config.ini" \
     "$doorstop_dir/winhttp.dll" \
+    "$doorstop_dir/../LICENSE" \
+    "$license_dir/BepInEx-LICENSE.txt" \
+    "$license_dir/HarmonyX-LICENSE.txt" \
+    "$license_dir/MonoMod-LICENSE.txt" \
+    "$license_dir/Mono.Cecil-LICENSE.txt" \
+    "$license_dir/UPSTREAM-SOURCES.txt" \
+    "$root_dir/LICENSE" \
     "$control_plugin"; do
     if [[ ! -f "$required" ]]; then
         printf 'Required pinned control input is missing: %s\n' "$required" >&2
@@ -51,11 +59,19 @@ done
 
 staging="$(mktemp -d "$control_dir/.vrcrafter-control.XXXXXX")"
 trap 'rm -rf -- "$staging"' EXIT
-mkdir -p "$staging/BepInEx/plugins" "$staging/BepInEx/config"
+mkdir -p "$staging/BepInEx/plugins" "$staging/BepInEx/config" "$staging/licenses"
 cp -a -- "$bepinex_dir/BepInEx/core" "$staging/BepInEx/core"
 cp -- "$control_plugin" "$staging/BepInEx/plugins/Vrcrafter.BepInExControl.dll"
 cp -- "$doorstop_dir/winhttp.dll" "$staging/winhttp.dll"
 cp -- "$bepinex_dir/doorstop_config.ini" "$staging/doorstop_config.ini"
+cp -- "$doorstop_dir/../LICENSE" "$staging/licenses/UnityDoorstop-LICENSE.txt"
+cp -- "$root_dir/LICENSE" "$staging/licenses/VRCrafter-LICENSE.txt"
+cp -- "$license_dir/BepInEx-LICENSE.txt" \
+    "$license_dir/HarmonyX-LICENSE.txt" \
+    "$license_dir/MonoMod-LICENSE.txt" \
+    "$license_dir/Mono.Cecil-LICENSE.txt" \
+    "$license_dir/UPSTREAM-SOURCES.txt" \
+    "$staging/licenses/"
 printf '[Chainloader]\nHideManagerGameObject = true\n' > "$staging/BepInEx/config/BepInEx.cfg"
 cp -a -- "$staging/." "$control_dir/"
 

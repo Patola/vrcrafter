@@ -13,11 +13,11 @@ BepInEx 5.4.23.5, HarmonyX, and MonoMod are MIT-licensed.
 
 ## UnityDoorstop
 
-UnityDoorstop 4.3.0 is used unmodified, under LGPL-2.1, as a control-only component. It is not combined with or modified by project code.
+UnityDoorstop 4.6.0 is used unmodified, under LGPL-2.1, as a control-only component. It is not combined with or modified by project code.
 
 - Source: https://github.com/NeighTools/UnityDoorstop
-- Release: https://github.com/NeighTools/UnityDoorstop/releases/tag/v4.3.0
-- License: https://github.com/NeighTools/UnityDoorstop/blob/master/LICENSE
+- Release: https://github.com/NeighTools/UnityDoorstop/releases/tag/v4.6.0
+- License: https://github.com/NeighTools/UnityDoorstop/blob/v4.6.0/LICENSE
 
 ## Proton and Wine
 

@@ -5,6 +5,12 @@
     "unity": "6000.3.2f1",
     "assemblyCSharpSha256": "3d7457446cbbed551f938b5271f294f45ec100e1f295eeba9b0884b3cdd9191e"
   },
+  "protonWinHttpBackend": {
+    "version": "11.0-2",
+    "sourceRevision": "db9e6ffbf24a95b104fb699dd62532c70a2f9a51",
+    "relativePath": "files/lib/wine/x86_64-windows/winhttp.dll",
+    "sha256": "c822ab64506d4dd7ba14c5af75e983e139a8d4141e459bfc28a4af23cf640509"
+  },
   "allowedLicenses": ["MIT", "LGPL-2.1-only-control"],
   "dependencies": [
     {

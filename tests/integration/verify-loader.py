@@ -203,8 +203,16 @@ def verify(text, mode="direct"):
     cursor = require_ordered(text, MARKERS)
     require_ordered(text, STRESS_MARKERS, cursor)
     for marker in ("START", "START_QUEUED", "MANAGED_ENTRY", "HOST_CREATE",
-                   "GC_STRESS_START", "GC_STRESS_OK", "HOST_DESTROY"):
+                   "GC_STRESS_START", "GC_STRESS_OK", "HOST_DESTROY",
+                   "MONO_MODULE", "MONO_DOMAIN"):
         require_single(text, marker)
+    require_pattern(text, r"MONO_MODULE error=0(?![0-9])", "successful MONO_MODULE")
+    require_pattern(text, r"MONO_DOMAIN error=0(?![0-9])", "successful MONO_DOMAIN")
+    ping_values = re.findall(r"(?<![A-Z0-9_])PING=([^\s]+)", text)
+    if ping_values.count("42") > 1:
+        raise AssertionError("duplicate PING=42")
+    if ping_values != ["42"]:
+        raise AssertionError("missing exact PING=42")
     reject_markers(text, ("EXCEPTION", "MANAGED_EXCEPTION", "GC_STRESS_ERROR",
                           "IDENTITY_REJECT", "IDENTITY_ERROR"), "successful run")
     require_pattern(text, r"MANAGED_RESULT=0(?![0-9])", "zero managed result")
